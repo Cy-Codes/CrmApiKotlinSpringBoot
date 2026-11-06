@@ -109,7 +109,7 @@ jobs:
 
       - name: Verify Database-Level Test Suites on Both Engines
         run: |
-          docker exec crm-database-ms /app/tests/run_tests.sh
+          docker exec crm-database-ms /app/Tests/run_tests.sh
           docker exec crm_database_pg /workspace/tests/run_tests.sh
 
       - name: Build & Launch CrmApiKotlinSpringBoot Server

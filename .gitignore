@@ -41,3 +41,8 @@ replay_pid*
 out/
 .vscode/
 .DS_Store
+
+# Environment & secrets (keep the committed template)
+.env
+.env.*
+!.env.example

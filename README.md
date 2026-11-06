@@ -105,6 +105,8 @@ CrmApiKotlinSpringBoot/
 ├── settings.gradle.kts
 ├── README.md
 ├── CODING_STANDARDS.md
+├── Dockerfile                             # Multi-stage, non-root, cloud-agnostic container image
+├── .env.example                           # Container runtime contract (copy to git-ignored .env)
 ├── bruno/                                 # Git-native API test collection & environments
 ├── src/
 │   ├── main/
@@ -126,7 +128,7 @@ CrmApiKotlinSpringBoot/
 ## Getting Started
 
 ### Prerequisites
-- JDK 21+ (or JDK 25)
+- JDK 25 (the Gradle toolchain targets `JavaLanguageVersion.of(25)`)
 - Microsoft SQL Server (`CRMDatabaseMS`) and/or PostgreSQL (`CRMDatabasePG`) instances.
 - [Bruno CLI or GUI](https://www.usebruno.com/) (optional, for running the API collection).
 
@@ -137,6 +139,16 @@ cd CrmApiKotlinSpringBoot
 ./gradlew bootRun
 ```
 Visit Swagger UI at `http://localhost:5172/swagger` or execute GraphQL queries against `POST http://localhost:5172/graphql`.
+
+### Run as a Container
+The same image runs on local Docker, AWS ECS Fargate, and Azure Container Apps. All settings come from environment variables documented in [.env.example](file:///Users/cy/codes/localstack-reference-architecture/CrmApiKotlinSpringBoot/.env.example); connection strings use the same ADO.NET format as `CrmApiCSharp`:
+```bash
+cp .env.example .env
+docker build -t crm-api-kotlin .
+docker run --rm -p 8082:8080 --env-file .env crm-api-kotlin
+curl http://localhost:8082/health
+```
+To deploy every runtime × engine permutation locally or to LocalStack for AWS / Azure, see [crm-infra/README.md](file:///Users/cy/codes/localstack-reference-architecture/crm-infra/README.md).
 
 ### Testing Endpoints with Bruno
 Run the automated Bruno test suite against your active database provider:

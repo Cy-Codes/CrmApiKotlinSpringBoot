@@ -191,3 +191,15 @@ Whenever logic is repeated across controllers, query builders, or tests, extract
 ### 8.2 Pre-Commit Auto-Formatting & Unused Import Removal
 - `.editorconfig` enforces standard 4-space Kotlin indentation, UTF-8 encoding, final newline, and trailing whitespace trimming.
 - On every `git commit`, the pre-commit hook automatically cleans unused imports, sorts remaining imports alphabetically, formats staged `.kt` and `.kts` files, and re-stages the files.
+
+---
+
+## 9. Container Image & Runtime Configuration Contract
+
+The same image runs unchanged on local Docker, AWS ECS Fargate, and Azure Container Apps (see [crm-infra/CODING_STANDARDS.md](file:///Users/cy/codes/localstack-reference-architecture/crm-infra/CODING_STANDARDS.md) and ADR 9–12 in [docs/architecture-decisions.md](file:///Users/cy/codes/localstack-reference-architecture/docs/architecture-decisions.md)).
+
+- **Multi-Stage, Non-Root `Dockerfile`**: Build the Spring Boot fat JAR with the Gradle wrapper on `eclipse-temurin:<JAVA_VERSION>-jdk`, run on `eclipse-temurin:<JAVA_VERSION>-jre` as the non-root `crmapi` user, and size the heap with `-XX:MaxRAMPercentage` rather than fixed `-Xmx` values. The image `JAVA_VERSION` must match the Gradle toolchain (`JavaLanguageVersion.of(25)`).
+- **Environment-Only Configuration**: The container listens on `SERVER_PORT=8080` and reads `CONNECTIONSTRINGS_CRMDATABASEMS` / `CONNECTIONSTRINGS_CRMDATABASEPG`, which Spring relaxed binding maps to `ConnectionStrings.CRMDatabaseMS` / `ConnectionStrings.CRMDatabasePG`. Values use the **same ADO.NET format as CrmApiCSharp**; `DbConnectionFactory` translates them to JDBC URLs. These names are shared with `crm-infra/terraform/modules/shared/crm-runtime-config` and must not change without updating it.
+- **Documented Templates**: Every runtime variable is documented in [`.env.example`](file:///Users/cy/codes/localstack-reference-architecture/CrmApiKotlinSpringBoot/.env.example); the real `.env` is git-ignored and never committed.
+- **Health Contract**: `/health` (and `/health/{ms|pg}`) must stay unauthenticated and cheap; load balancers and `crm-infra/scripts/smoke.sh` depend on it.
+- **Build Context Hygiene**: Keep `.dockerignore` excluding `build/`, `.gradle/`, `.kotlin/`, `.env`, and IDE state so the content-hash image tag changes only when shipped source changes.

@@ -1,0 +1,11 @@
+.gradle/
+.kotlin/
+build/
+.git
+.github
+.idea
+.vscode
+bruno
+*.md
+.env
+.env.*

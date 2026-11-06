@@ -1,0 +1,15 @@
+meta {
+  name: Get Pricebook Entries By Id
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/{{provider}}/v1/salesforce/pricebook-entries/{{sf_pricebook_entry_id}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: in [200, 404]
+}

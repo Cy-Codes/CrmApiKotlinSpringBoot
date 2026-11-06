@@ -1,0 +1,15 @@
+meta {
+  name: Invalid Provider (Regex Mismatch 404)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/invalid/v1/salesforce/accounts
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 404
+}

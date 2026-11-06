@@ -1,0 +1,16 @@
+meta {
+  name: SQL Server Connection Check
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/health/ms
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: in [200, 503]
+  res.body.provider: eq ms
+}

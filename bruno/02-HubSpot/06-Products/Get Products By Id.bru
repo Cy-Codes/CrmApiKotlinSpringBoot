@@ -1,0 +1,15 @@
+meta {
+  name: Get Products By Id
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/{{provider}}/v1/hubspot/products/{{hs_product_id}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: in [200, 404]
+}

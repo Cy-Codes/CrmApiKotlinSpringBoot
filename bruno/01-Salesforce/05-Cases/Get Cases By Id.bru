@@ -1,0 +1,15 @@
+meta {
+  name: Get Cases By Id
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/{{provider}}/v1/salesforce/cases/{{sf_case_id}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: in [200, 404]
+}

@@ -1,0 +1,26 @@
+meta {
+  name: GraphQL - HubSpot Companies
+  type: graphql
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: none
+}
+
+body:graphql {
+  query {
+    hubSpotCompanies(page: 1, pageSize: 5) {
+      companyId
+      name
+      domain
+    }
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.data: isDefined
+}

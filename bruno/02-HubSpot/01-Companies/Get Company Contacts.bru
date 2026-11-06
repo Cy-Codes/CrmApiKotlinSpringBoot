@@ -1,0 +1,15 @@
+meta {
+  name: Get Company Contacts
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/{{provider}}/v1/hubspot/companies/{{hs_company_id}}/contacts
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: in [200, 404]
+}

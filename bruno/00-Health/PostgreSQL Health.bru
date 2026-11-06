@@ -1,0 +1,16 @@
+meta {
+  name: PostgreSQL Connection Check
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/health/pg
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: in [200, 503]
+  res.body.provider: eq pg
+}

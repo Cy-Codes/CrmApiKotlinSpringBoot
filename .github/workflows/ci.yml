@@ -1,0 +1,157 @@
+name: CrmApiKotlinSpringBoot CI & End-to-End Integration Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-and-unit-tests:
+    name: Build Kotlin + Spring Boot Solution & Run JUnit 5 Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout CrmApiKotlinSpringBoot
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+          cache: 'gradle'
+
+      - name: Make Gradle Wrapper Executable
+        run: chmod +x ./gradlew
+
+      - name: Build & Run JUnit 5 Unit & Integration Tests
+        run: ./gradlew test --no-daemon
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-test-results
+          path: "build/test-results/test/*.xml"
+          retention-days: 14
+
+  e2e-bruno-integration-tests:
+    name: End-to-End Multi-DB & Bruno API Integration Suite
+    needs: build-and-unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout CrmApiKotlinSpringBoot
+        uses: actions/checkout@v4
+        with:
+          path: CrmApiKotlinSpringBoot
+
+      - name: Checkout CRMDatabaseMS (SQL Server Schema & Seed)
+        uses: actions/checkout@v4
+        with:
+          repository: Cy-Codes/CRMDatabaseMS
+          path: CRMDatabaseMS
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout CRMDatabasePG (PostgreSQL Migrations & Seed)
+        uses: actions/checkout@v4
+        with:
+          repository: Cy-Codes/CRMDatabasePG
+          path: CRMDatabasePG
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+          cache: 'gradle'
+
+      - name: Setup Node.js & Install Bruno CLI
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install @usebruno/cli
+        run: npm install -g @usebruno/cli
+
+      - name: Start SQL Server (CRMDatabaseMS) & PostgreSQL (CRMDatabasePG) Containers
+        run: |
+          docker compose -f CRMDatabaseMS/docker-compose.yml up -d --build
+          docker compose -f CRMDatabasePG/docker-compose.yml up -d --build
+
+      - name: Wait for Both Databases to Deploy Schemas & Seed Data
+        run: |
+          echo "Waiting for SQL Server (crm-database-ms) initialization..."
+          for i in {1..90}; do
+            if docker logs crm-database-ms 2>&1 | grep -q "Standard CRM data seeded successfully"; then
+              echo "SQL Server ready!"
+              break
+            fi
+            if [ "$i" -eq 90 ]; then
+              docker logs crm-database-ms
+              exit 1
+            fi
+            sleep 2
+          done
+
+          echo "Waiting for PostgreSQL (crm_database_pg) initialization..."
+          for i in {1..60}; do
+            if docker logs crm_database_pg 2>&1 | grep -q "CRM Database initialization complete"; then
+              echo "PostgreSQL ready!"
+              break
+            fi
+            if [ "$i" -eq 60 ]; then
+              docker logs crm_database_pg
+              exit 1
+            fi
+            sleep 2
+          done
+
+      - name: Verify Database-Level Test Suites on Both Engines
+        run: |
+          docker exec crm-database-ms /app/tests/run_tests.sh
+          docker exec crm_database_pg /workspace/tests/run_tests.sh
+
+      - name: Build & Launch CrmApiKotlinSpringBoot Server
+        working-directory: CrmApiKotlinSpringBoot
+        run: |
+          chmod +x ./gradlew
+          ./gradlew bootJar --no-daemon
+          nohup java -jar build/libs/*.jar --server.port=5172 > /tmp/crmapi.log 2>&1 &
+          echo $! > /tmp/crmapi.pid
+
+          echo "Waiting for CrmApiKotlinSpringBoot to listen on http://localhost:5172/health..."
+          for i in {1..30}; do
+            if curl -sf http://localhost:5172/health > /dev/null; then
+              echo "CrmApiKotlinSpringBoot is healthy!"
+              curl -s http://localhost:5172/health | jq .
+              curl -s http://localhost:5172/health/ms | jq .
+              curl -s http://localhost:5172/health/pg | jq .
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              cat /tmp/crmapi.log
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: Run Bruno API Test Suite against SQL Server (Local-MsSql)
+        working-directory: CrmApiKotlinSpringBoot
+        run: |
+          chmod +x ./bruno/run_tests.sh
+          ./bruno/run_tests.sh Local-MsSql
+
+      - name: Run Bruno API Test Suite against PostgreSQL (Local-Postgres)
+        working-directory: CrmApiKotlinSpringBoot
+        run: |
+          ./bruno/run_tests.sh Local-Postgres
+
+      - name: Stop CrmApiKotlinSpringBoot & Tear Down Containers
+        if: always()
+        run: |
+          if [ -f /tmp/crmapi.pid ]; then
+            kill $(cat /tmp/crmapi.pid) || true
+          fi
+          docker compose -f CRMDatabaseMS/docker-compose.yml down -v || true
+          docker compose -f CRMDatabasePG/docker-compose.yml down -v || true

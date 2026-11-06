@@ -1,0 +1,15 @@
+meta {
+  name: Get Business Units By Id
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/{{provider}}/v1/dynamics365/business-units/{{d365_business_unit_id}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: in [200, 404]
+}

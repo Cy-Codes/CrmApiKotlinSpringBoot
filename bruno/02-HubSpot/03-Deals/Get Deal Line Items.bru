@@ -1,0 +1,15 @@
+meta {
+  name: Get Deal Line Items
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/{{provider}}/v1/hubspot/deals/{{hs_deal_id}}/line-items
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: in [200, 404]
+}

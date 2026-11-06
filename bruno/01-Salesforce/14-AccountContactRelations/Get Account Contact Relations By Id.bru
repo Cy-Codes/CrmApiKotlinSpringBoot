@@ -1,0 +1,15 @@
+meta {
+  name: Get Account Contact Relations By Id
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/{{provider}}/v1/salesforce/account-contact-relations/{{sf_acr_id}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: in [200, 404]
+}

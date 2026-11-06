@@ -1,0 +1,15 @@
+meta {
+  name: Get Deal Stages By Id
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/{{provider}}/v1/hubspot/deal-stages/{{hs_stage_id}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: in [200, 404]
+}

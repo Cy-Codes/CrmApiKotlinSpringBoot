@@ -1,0 +1,15 @@
+meta {
+  name: Get Account Opportunities
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/{{provider}}/v1/salesforce/accounts/{{sf_account_id}}/opportunities
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: in [200, 404]
+}

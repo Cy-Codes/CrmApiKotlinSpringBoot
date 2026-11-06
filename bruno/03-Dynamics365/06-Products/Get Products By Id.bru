@@ -1,0 +1,15 @@
+meta {
+  name: Get Products By Id
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/{{provider}}/v1/dynamics365/products/{{d365_product_id}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: in [200, 404]
+}

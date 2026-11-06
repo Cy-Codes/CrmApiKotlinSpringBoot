@@ -1,0 +1,15 @@
+meta {
+  name: Get Object Associations By Id
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/{{provider}}/v1/hubspot/object-associations/{{hs_assoc_id}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: in [200, 404]
+}

@@ -1,0 +1,15 @@
+meta {
+  name: Get System Users By Id
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/{{provider}}/v1/dynamics365/system-users/{{d365_system_user_id}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: in [200, 404]
+}

@@ -1,0 +1,15 @@
+meta {
+  name: Get Tickets By Id
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/{{provider}}/v1/hubspot/tickets/{{hs_ticket_id}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: in [200, 404]
+}

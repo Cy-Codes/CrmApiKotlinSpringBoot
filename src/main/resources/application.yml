@@ -1,0 +1,17 @@
+server:
+  port: 5172
+
+spring:
+  application:
+    name: CrmApiKotlinSpringBoot
+
+crm:
+  databases:
+    ms:
+      url: ${CRM_DATABASES_MS_URL:jdbc:sqlserver://localhost:1433;databaseName=CRMDatabaseMS;encrypt=true;trustServerCertificate=true}
+      username: ${CRM_DATABASES_MS_USERNAME:sa}
+      password: ${CRM_DATABASES_MS_PASSWORD:YourStrong!Passw0rd}
+    pg:
+      url: ${CRM_DATABASES_PG_URL:jdbc:postgresql://localhost:5432/CRMDatabasePG}
+      username: ${CRM_DATABASES_PG_USERNAME:postgres}
+      password: ${CRM_DATABASES_PG_PASSWORD:YourStrong!Passw0rd}

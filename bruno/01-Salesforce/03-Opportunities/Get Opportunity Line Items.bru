@@ -1,0 +1,15 @@
+meta {
+  name: Get Opportunity Line Items
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/{{provider}}/v1/salesforce/opportunities/{{sf_opportunity_id}}/line-items
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: in [200, 404]
+}

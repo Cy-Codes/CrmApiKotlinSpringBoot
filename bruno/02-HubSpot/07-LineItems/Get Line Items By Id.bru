@@ -1,0 +1,15 @@
+meta {
+  name: Get Line Items By Id
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/{{provider}}/v1/hubspot/line-items/{{hs_line_item_id}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: in [200, 404]
+}

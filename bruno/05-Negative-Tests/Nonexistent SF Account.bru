@@ -1,0 +1,15 @@
+meta {
+  name: Nonexistent SF Account (404)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/{{provider}}/v1/salesforce/accounts/000000000000000NON
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 404
+}

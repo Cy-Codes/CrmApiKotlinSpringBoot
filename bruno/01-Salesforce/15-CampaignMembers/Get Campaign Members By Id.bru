@@ -1,0 +1,15 @@
+meta {
+  name: Get Campaign Members By Id
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/{{provider}}/v1/salesforce/campaign-members/{{sf_cm_id}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: in [200, 404]
+}

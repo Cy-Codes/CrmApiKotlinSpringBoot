@@ -1,0 +1,26 @@
+meta {
+  name: GraphQL - Salesforce Accounts
+  type: graphql
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: none
+}
+
+body:graphql {
+  query {
+    salesforceAccounts(page: 1, pageSize: 5) {
+      id
+      name
+      industry
+    }
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.data: isDefined
+}

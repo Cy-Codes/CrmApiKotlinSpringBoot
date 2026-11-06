@@ -1,0 +1,33 @@
+meta {
+  name: Get Tickets (Paged)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/{{provider}}/v1/hubspot/tickets
+  body: none
+  auth: none
+}
+
+params:query {
+  page: 1
+  pageSize: 20
+  sortDirection: asc
+}
+
+assert {
+  res.status: eq 200
+  res.body.items: isDefined
+  res.body.page: eq 1
+}
+
+script:post-response {
+  if (res.body && res.body.items && res.body.items.length > 0) {
+    const first = res.body.items[0];
+    const id = first.ticketId || first.id;
+    if (id) {
+      bru.setVar("hs_ticket_id", id);
+    }
+  }
+}

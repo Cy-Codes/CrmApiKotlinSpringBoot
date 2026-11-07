@@ -1,0 +1,28 @@
+meta {
+  name: Create Deal (admin, 201)
+  type: http
+  seq: 91
+}
+
+post {
+  url: {{baseUrl}}/api/{{provider}}/v1/hubspot/deals
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{admin_token}}
+}
+
+body:json {
+  {"dealName":"Bruno Deal","pipelineId":"{{hs_pipeline_id}}","dealStageId":"{{hs_stage_id}}","amount":500.00}
+}
+
+script:post-response {
+  bru.setVar("hs_created_deal_id", res.body.dealId);
+}
+
+assert {
+  res.status: eq 201
+  res.headers.location: contains /hubspot/deals/
+}

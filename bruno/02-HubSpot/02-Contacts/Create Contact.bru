@@ -1,0 +1,32 @@
+meta {
+  name: Create Contact (admin, 201)
+  type: http
+  seq: 91
+}
+
+post {
+  url: {{baseUrl}}/api/{{provider}}/v1/hubspot/contacts
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{admin_token}}
+}
+
+body:json {
+  {"email":"bruno-{{run_suffix}}@example.com","firstName":"Bruno"}
+}
+
+script:pre-request {
+  bru.setVar("run_suffix", Date.now());
+}
+
+script:post-response {
+  bru.setVar("hs_created_contact_id", res.body.contactId);
+}
+
+assert {
+  res.status: eq 201
+  res.headers.location: contains /hubspot/contacts/
+}

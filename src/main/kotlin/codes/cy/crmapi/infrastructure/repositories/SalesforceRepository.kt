@@ -5,19 +5,23 @@ import codes.cy.crmapi.domain.common.PagedResult
 import codes.cy.crmapi.domain.common.QueryOptions
 import codes.cy.crmapi.domain.salesforce.Account
 import codes.cy.crmapi.domain.salesforce.AccountContactRelation
+import codes.cy.crmapi.domain.salesforce.AccountWriteRequest
 import codes.cy.crmapi.domain.salesforce.Campaign
 import codes.cy.crmapi.domain.salesforce.CampaignMember
 import codes.cy.crmapi.domain.salesforce.Case
 import codes.cy.crmapi.domain.salesforce.Contact
+import codes.cy.crmapi.domain.salesforce.ContactWriteRequest
 import codes.cy.crmapi.domain.salesforce.Event
 import codes.cy.crmapi.domain.salesforce.Lead
 import codes.cy.crmapi.domain.salesforce.Opportunity
 import codes.cy.crmapi.domain.salesforce.OpportunityLineItem
+import codes.cy.crmapi.domain.salesforce.OpportunityWriteRequest
 import codes.cy.crmapi.domain.salesforce.Pricebook2
 import codes.cy.crmapi.domain.salesforce.PricebookEntry
 import codes.cy.crmapi.domain.salesforce.Product2
 import codes.cy.crmapi.domain.salesforce.Task
 import codes.cy.crmapi.domain.salesforce.User
+import java.time.OffsetDateTime
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -125,4 +129,31 @@ class SalesforceRepository(
 
     override fun getCampaignMemberById(provider: DatabaseProvider, id: String): CampaignMember? =
         baseRepository.getById(provider, "Salesforce.CampaignMember", "Id", id, CampaignMember::class)
+
+    override fun executeCreateAccount(provider: DatabaseProvider, id: String, request: AccountWriteRequest, now: OffsetDateTime): Account =
+        baseRepository.executeCreate(provider, SALESFORCE_ACCOUNT_TABLE, SALESFORCE_ID_COLUMN, id, request.toInsertColumns(id, now), Account::class)
+
+    override fun executeUpdateAccount(provider: DatabaseProvider, id: String, request: AccountWriteRequest, now: OffsetDateTime): Account? =
+        baseRepository.executeUpdate(provider, SALESFORCE_ACCOUNT_TABLE, SALESFORCE_ID_COLUMN, id, request.toUpdateColumns(now), Account::class)
+
+    override fun executeDeleteAccount(provider: DatabaseProvider, id: String): Boolean =
+        baseRepository.executeDelete(provider, SALESFORCE_ACCOUNT_TABLE, SALESFORCE_ID_COLUMN, id)
+
+    override fun executeCreateContact(provider: DatabaseProvider, id: String, request: ContactWriteRequest, now: OffsetDateTime): Contact =
+        baseRepository.executeCreate(provider, SALESFORCE_CONTACT_TABLE, SALESFORCE_ID_COLUMN, id, request.toInsertColumns(id, now), Contact::class)
+
+    override fun executeUpdateContact(provider: DatabaseProvider, id: String, request: ContactWriteRequest, now: OffsetDateTime): Contact? =
+        baseRepository.executeUpdate(provider, SALESFORCE_CONTACT_TABLE, SALESFORCE_ID_COLUMN, id, request.toUpdateColumns(now), Contact::class)
+
+    override fun executeDeleteContact(provider: DatabaseProvider, id: String): Boolean =
+        baseRepository.executeDelete(provider, SALESFORCE_CONTACT_TABLE, SALESFORCE_ID_COLUMN, id)
+
+    override fun executeCreateOpportunity(provider: DatabaseProvider, id: String, request: OpportunityWriteRequest, now: OffsetDateTime): Opportunity =
+        baseRepository.executeCreate(provider, SALESFORCE_OPPORTUNITY_TABLE, SALESFORCE_ID_COLUMN, id, request.toInsertColumns(id, now), Opportunity::class)
+
+    override fun executeUpdateOpportunity(provider: DatabaseProvider, id: String, request: OpportunityWriteRequest, now: OffsetDateTime): Opportunity? =
+        baseRepository.executeUpdate(provider, SALESFORCE_OPPORTUNITY_TABLE, SALESFORCE_ID_COLUMN, id, request.toUpdateColumns(now), Opportunity::class)
+
+    override fun executeDeleteOpportunity(provider: DatabaseProvider, id: String): Boolean =
+        baseRepository.executeDelete(provider, SALESFORCE_OPPORTUNITY_TABLE, SALESFORCE_ID_COLUMN, id)
 }

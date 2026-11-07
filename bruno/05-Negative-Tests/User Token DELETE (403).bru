@@ -1,0 +1,20 @@
+meta {
+  name: User Token DELETE Account (403)
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{baseUrl}}/api/{{provider}}/v1/salesforce/accounts/{{sf_account_id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{user_token}}
+}
+
+assert {
+  res.status: eq 403
+  res.body.status: eq 403
+}

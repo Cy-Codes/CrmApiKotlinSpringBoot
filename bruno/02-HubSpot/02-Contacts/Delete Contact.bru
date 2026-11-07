@@ -1,0 +1,19 @@
+meta {
+  name: Delete Contact (admin, 204)
+  type: http
+  seq: 93
+}
+
+delete {
+  url: {{baseUrl}}/api/{{provider}}/v1/hubspot/contacts/{{hs_created_contact_id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{admin_token}}
+}
+
+assert {
+  res.status: eq 204
+}

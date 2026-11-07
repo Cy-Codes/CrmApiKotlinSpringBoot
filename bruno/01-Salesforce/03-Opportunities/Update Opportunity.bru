@@ -1,0 +1,23 @@
+meta {
+  name: Update Opportunity (user, 200)
+  type: http
+  seq: 92
+}
+
+put {
+  url: {{baseUrl}}/api/{{provider}}/v1/salesforce/opportunities/{{sf_created_opportunity_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{user_token}}
+}
+
+body:json {
+  {"name":"Bruno Opportunity Updated","stageName":"Qualification","closeDate":"2028-01-31","ownerId":"{{sf_user_id}}","accountId":"{{sf_account_id}}","amount":2000.00,"probability":20.00}
+}
+
+assert {
+  res.status: eq 200
+}

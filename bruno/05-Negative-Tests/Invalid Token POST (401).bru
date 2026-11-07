@@ -1,0 +1,23 @@
+meta {
+  name: Invalid Token POST Account (401)
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/{{provider}}/v1/salesforce/accounts
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: not.a.valid.jwt
+}
+
+body:json {
+  {"name":"Bruno Negative","ownerId":"{{sf_user_id}}"}
+}
+
+assert {
+  res.status: eq 401
+}

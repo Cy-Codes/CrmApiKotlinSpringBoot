@@ -1,0 +1,23 @@
+meta {
+  name: Update Account (user, 200)
+  type: http
+  seq: 92
+}
+
+put {
+  url: {{baseUrl}}/api/{{provider}}/v1/salesforce/accounts/{{sf_created_account_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{user_token}}
+}
+
+body:json {
+  {"name":"Bruno Account Updated","ownerId":"{{sf_user_id}}","industry":"Finance"}
+}
+
+assert {
+  res.status: eq 200
+}

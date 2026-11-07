@@ -1,0 +1,28 @@
+meta {
+  name: Create Opportunity (admin, 201)
+  type: http
+  seq: 91
+}
+
+post {
+  url: {{baseUrl}}/api/{{provider}}/v1/dynamics365/opportunities
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{admin_token}}
+}
+
+body:json {
+  {"name":"Bruno Opportunity","ownerId":"{{d365_system_user_id}}","owningBusinessUnit":"{{d365_business_unit_id}}","estimatedValue":1000.00}
+}
+
+script:post-response {
+  bru.setVar("d365_created_opportunity_id", res.body.opportunityId);
+}
+
+assert {
+  res.status: eq 201
+  res.headers.location: contains /dynamics365/opportunities/
+}

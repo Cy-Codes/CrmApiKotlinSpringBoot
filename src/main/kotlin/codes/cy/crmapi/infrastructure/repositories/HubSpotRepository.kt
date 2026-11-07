@@ -4,9 +4,12 @@ import codes.cy.crmapi.domain.common.DatabaseProvider
 import codes.cy.crmapi.domain.common.PagedResult
 import codes.cy.crmapi.domain.common.QueryOptions
 import codes.cy.crmapi.domain.hubspot.Company
+import codes.cy.crmapi.domain.hubspot.CompanyWriteRequest
 import codes.cy.crmapi.domain.hubspot.Contact
+import codes.cy.crmapi.domain.hubspot.ContactWriteRequest
 import codes.cy.crmapi.domain.hubspot.Deal
 import codes.cy.crmapi.domain.hubspot.DealStage
+import codes.cy.crmapi.domain.hubspot.DealWriteRequest
 import codes.cy.crmapi.domain.hubspot.Engagement
 import codes.cy.crmapi.domain.hubspot.LineItem
 import codes.cy.crmapi.domain.hubspot.ObjectAssociation
@@ -15,6 +18,7 @@ import codes.cy.crmapi.domain.hubspot.Pipeline
 import codes.cy.crmapi.domain.hubspot.Product
 import codes.cy.crmapi.domain.hubspot.Ticket
 import codes.cy.crmapi.infrastructure.compilers.SqlQuery
+import java.time.OffsetDateTime
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -110,4 +114,31 @@ class HubSpotRepository(
 
     override fun getObjectAssociationById(provider: DatabaseProvider, id: Long): ObjectAssociation? =
         baseRepository.getById(provider, "HubSpot.ObjectAssociation", "associationId", id, ObjectAssociation::class)
+
+    override fun executeCreateCompany(provider: DatabaseProvider, id: Long, request: CompanyWriteRequest, now: OffsetDateTime): Company =
+        baseRepository.executeCreate(provider, HUBSPOT_COMPANY_TABLE, HUBSPOT_COMPANY_ID_COLUMN, id, request.toInsertColumns(id, now), Company::class)
+
+    override fun executeUpdateCompany(provider: DatabaseProvider, id: Long, request: CompanyWriteRequest, now: OffsetDateTime): Company? =
+        baseRepository.executeUpdate(provider, HUBSPOT_COMPANY_TABLE, HUBSPOT_COMPANY_ID_COLUMN, id, request.toUpdateColumns(now), Company::class)
+
+    override fun executeDeleteCompany(provider: DatabaseProvider, id: Long): Boolean =
+        baseRepository.executeDelete(provider, HUBSPOT_COMPANY_TABLE, HUBSPOT_COMPANY_ID_COLUMN, id)
+
+    override fun executeCreateContact(provider: DatabaseProvider, id: Long, request: ContactWriteRequest, now: OffsetDateTime): Contact =
+        baseRepository.executeCreate(provider, HUBSPOT_CONTACT_TABLE, HUBSPOT_CONTACT_ID_COLUMN, id, request.toInsertColumns(id, now), Contact::class)
+
+    override fun executeUpdateContact(provider: DatabaseProvider, id: Long, request: ContactWriteRequest, now: OffsetDateTime): Contact? =
+        baseRepository.executeUpdate(provider, HUBSPOT_CONTACT_TABLE, HUBSPOT_CONTACT_ID_COLUMN, id, request.toUpdateColumns(now), Contact::class)
+
+    override fun executeDeleteContact(provider: DatabaseProvider, id: Long): Boolean =
+        baseRepository.executeDelete(provider, HUBSPOT_CONTACT_TABLE, HUBSPOT_CONTACT_ID_COLUMN, id)
+
+    override fun executeCreateDeal(provider: DatabaseProvider, id: Long, request: DealWriteRequest, now: OffsetDateTime): Deal =
+        baseRepository.executeCreate(provider, HUBSPOT_DEAL_TABLE, HUBSPOT_DEAL_ID_COLUMN, id, request.toInsertColumns(id, now), Deal::class)
+
+    override fun executeUpdateDeal(provider: DatabaseProvider, id: Long, request: DealWriteRequest, now: OffsetDateTime): Deal? =
+        baseRepository.executeUpdate(provider, HUBSPOT_DEAL_TABLE, HUBSPOT_DEAL_ID_COLUMN, id, request.toUpdateColumns(now), Deal::class)
+
+    override fun executeDeleteDeal(provider: DatabaseProvider, id: Long): Boolean =
+        baseRepository.executeDelete(provider, HUBSPOT_DEAL_TABLE, HUBSPOT_DEAL_ID_COLUMN, id)
 }

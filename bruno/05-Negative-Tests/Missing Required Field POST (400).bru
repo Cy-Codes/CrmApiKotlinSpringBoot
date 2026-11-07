@@ -1,0 +1,23 @@
+meta {
+  name: POST Account Missing ownerId (400)
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/{{provider}}/v1/salesforce/accounts
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{admin_token}}
+}
+
+body:json {
+  {"name":"No Owner"}
+}
+
+assert {
+  res.status: eq 400
+}

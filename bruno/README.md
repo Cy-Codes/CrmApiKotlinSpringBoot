@@ -86,8 +86,11 @@ bruno/
 │   └── Dynamics 365 Accounts Query.bru
 └── 05-Negative-Tests/                       # Route validation & error handling
     ├── Invalid Provider Routing.bru         # Expects 404
-    └── Nonexistent SF Account.bru           # Expects 404
+    ├── Nonexistent SF Account.bru           # Expects 404
+    └── Anonymous / invalid / user-role / validation / 404 / 409 write tests (seq 3-12)
 ```
+
+Entity folders for Salesforce / HubSpot / Dynamics365 Accounts, Contacts, Opportunities (Companies, Contacts, Deals for HubSpot) additionally contain `Create`, `Update` (seq 91-93) and `Delete` requests that chain through runtime variables such as `sf_created_account_id`.
 
 ---
 
@@ -97,6 +100,9 @@ bruno/
 Select the active environment in Bruno:
 - **`Local-MsSql`**: Points `provider` to `ms` (Microsoft SQL Server `CRMDatabaseMS`).
 - **`Local-Postgres`**: Points `provider` to `pg` (PostgreSQL `CRMDatabasePG`).
+
+### Authentication Tokens
+`GET` requests are anonymous. Write requests send `Authorization: Bearer {{admin_token}}` (Create, Delete) or `{{user_token}}` (Update); `User Token DELETE (403)` proves `DELETE` is admin-only. Mint tokens with `crm-infra/scripts/dev-token.sh <admin|user>` and either paste them into the environment variables `admin_token` / `user_token` or run `./run_tests.sh Local-Postgres`, which mints and injects them automatically (override with `ADMIN_TOKEN` / `USER_TOKEN`).
 
 ### Dynamic Variable Extraction (Chaining)
 Each entity list request (`Get <Entity> (Paged)`) executes a `post-response` script that extracts the first item's ID and updates runtime variables (e.g., `sf_account_id`, `hs_company_id`, `d365_account_id`). Subsequent detail and child-collection requests automatically consume these variables.

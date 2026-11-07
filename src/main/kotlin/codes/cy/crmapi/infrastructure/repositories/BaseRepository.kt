@@ -1,12 +1,16 @@
 package codes.cy.crmapi.infrastructure.repositories
 
+import codes.cy.crmapi.domain.common.DataConflictException
 import codes.cy.crmapi.domain.common.DatabaseProvider
 import codes.cy.crmapi.domain.common.PagedResult
 import codes.cy.crmapi.domain.common.QueryOptions
 import codes.cy.crmapi.infrastructure.compilers.ISqlCompilerFactory
+import codes.cy.crmapi.infrastructure.compilers.SqlCommand
 import codes.cy.crmapi.infrastructure.compilers.SqlQuery
+import codes.cy.crmapi.infrastructure.compilers.WhereClause
 import codes.cy.crmapi.infrastructure.connections.IDbConnectionFactory
 import java.sql.Connection
+import java.sql.SQLException
 import kotlin.reflect.KClass
 import org.springframework.stereotype.Repository
 
@@ -90,6 +94,95 @@ class BaseRepository(
             JdbcDataMapper.queryList(connection, compiled, klass)
         }
     }
+
+    override fun <T : Any> executeCreate(
+        provider: DatabaseProvider,
+        table: String,
+        idColumnName: String,
+        idValue: Any,
+        values: Map<String, Any?>,
+        klass: KClass<T>,
+    ): T {
+        requireSafeIdColumn(idColumnName)
+        val compiler = compilerFactory.getCompiler(provider)
+        val compiledInsert = compiler.compile(SqlCommand.Insert(table, values))
+        val compiledReRead = compiler.compile(SqlQuery(table).where(idColumnName, idValue))
+
+        return executeInTransaction(provider) { connection ->
+            JdbcDataMapper.executeUpdate(connection, compiledInsert)
+            checkNotNull(JdbcDataMapper.queryFirstOrNull(connection, compiledReRead, klass)) {
+                "Row $idValue was not found in $table immediately after insert."
+            }
+        }
+    }
+
+    override fun <T : Any> executeUpdate(
+        provider: DatabaseProvider,
+        table: String,
+        idColumnName: String,
+        idValue: Any,
+        values: Map<String, Any?>,
+        klass: KClass<T>,
+    ): T? {
+        requireSafeIdColumn(idColumnName)
+        val compiler = compilerFactory.getCompiler(provider)
+        val compiledUpdate = compiler.compile(
+            SqlCommand.Update(table, values, listOf(WhereClause.EqualsClause(idColumnName, idValue)))
+        )
+        val compiledReRead = compiler.compile(SqlQuery(table).where(idColumnName, idValue))
+
+        return executeInTransaction(provider) { connection ->
+            if (JdbcDataMapper.executeUpdate(connection, compiledUpdate) == 0) {
+                null
+            } else {
+                JdbcDataMapper.queryFirstOrNull(connection, compiledReRead, klass)
+            }
+        }
+    }
+
+    override fun executeDelete(
+        provider: DatabaseProvider,
+        table: String,
+        idColumnName: String,
+        idValue: Any,
+    ): Boolean {
+        requireSafeIdColumn(idColumnName)
+        val compiledDelete = compilerFactory.getCompiler(provider).compile(
+            SqlCommand.Delete(table, listOf(WhereClause.EqualsClause(idColumnName, idValue)))
+        )
+
+        return executeInTransaction(provider) { connection ->
+            JdbcDataMapper.executeUpdate(connection, compiledDelete) > 0
+        }
+    }
+
+    private fun requireSafeIdColumn(idColumnName: String) =
+        require(idColumnName.isSafeSqlIdentifier()) { "Invalid identifier column name: $idColumnName" }
+
+    /**
+     * Side-effecting I/O boundary for mutations: runs the operation in one transaction (commit on success, rollback on failure)
+     * without automatic retries, and translates constraint violations into [DataConflictException].
+     */
+    private fun <TResult> executeInTransaction(
+        provider: DatabaseProvider,
+        operation: (Connection) -> TResult,
+    ): TResult =
+        try {
+            connectionFactory.createConnection(provider).use { connection ->
+                val prevAutoCommit = connection.autoCommit
+                connection.autoCommit = false
+                try {
+                    operation(connection).also { connection.commit() }
+                } catch (ex: Exception) {
+                    runCatching { connection.rollback() }
+                    throw ex
+                } finally {
+                    connection.autoCommit = prevAutoCommit
+                }
+            }
+        } catch (ex: SQLException) {
+            if (ex.isConstraintViolation()) throw DataConflictException(cause = ex) else throw ex
+        }
 
     /**
      * Side-effecting I/O boundary: opens a provider-specific [Connection], executes the operation with transient fault retries, and closes the connection.

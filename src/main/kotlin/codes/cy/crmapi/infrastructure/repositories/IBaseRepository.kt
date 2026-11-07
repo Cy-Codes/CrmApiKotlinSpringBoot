@@ -33,4 +33,40 @@ interface IBaseRepository {
         klass: KClass<T>,
         configureQuery: ((SqlQuery) -> SqlQuery)? = null,
     ): List<T>
+
+    /**
+     * Command: inserts a row and returns it freshly re-read by id, within a single transaction.
+     * Constraint violations surface as [codes.cy.crmapi.domain.common.DataConflictException].
+     */
+    fun <T : Any> executeCreate(
+        provider: DatabaseProvider,
+        table: String,
+        idColumnName: String,
+        idValue: Any,
+        values: Map<String, Any?>,
+        klass: KClass<T>,
+    ): T
+
+    /**
+     * Command: updates the given columns of the row with the given id and returns it freshly re-read, within a single transaction.
+     * Returns `null` when no row has that id.
+     */
+    fun <T : Any> executeUpdate(
+        provider: DatabaseProvider,
+        table: String,
+        idColumnName: String,
+        idValue: Any,
+        values: Map<String, Any?>,
+        klass: KClass<T>,
+    ): T?
+
+    /**
+     * Command: hard-deletes the row with the given id. Returns `false` when no row has that id.
+     */
+    fun executeDelete(
+        provider: DatabaseProvider,
+        table: String,
+        idColumnName: String,
+        idValue: Any,
+    ): Boolean
 }

@@ -1,0 +1,28 @@
+meta {
+  name: Create Account (admin, 201)
+  type: http
+  seq: 91
+}
+
+post {
+  url: {{baseUrl}}/api/{{provider}}/v1/dynamics365/accounts
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{admin_token}}
+}
+
+body:json {
+  {"name":"Bruno Account","ownerId":"{{d365_system_user_id}}","owningBusinessUnit":"{{d365_business_unit_id}}"}
+}
+
+script:post-response {
+  bru.setVar("d365_created_account_id", res.body.accountId);
+}
+
+assert {
+  res.status: eq 201
+  res.headers.location: contains /dynamics365/accounts/
+}

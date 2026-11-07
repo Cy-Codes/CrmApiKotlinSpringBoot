@@ -1,6 +1,7 @@
 package codes.cy.crmapi.domain.common
 
 import java.math.BigDecimal
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -68,4 +69,22 @@ object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
 
     override fun deserialize(decoder: Decoder): LocalDateTime =
         LocalDateTime.parse(decoder.decodeString(), DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+}
+
+/**
+ * Lenient request-side [KSerializer] for [LocalDateTime] accepting either an ISO-8601 date-time or a bare ISO date (`yyyy-MM-dd`),
+ * which is interpreted as the start of that day. Serializes identically to [LocalDateTimeSerializer].
+ */
+object LenientLocalDateTimeSerializer : KSerializer<LocalDateTime> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("java.time.LocalDateTime.Lenient", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: LocalDateTime) =
+        LocalDateTimeSerializer.serialize(encoder, value)
+
+    override fun deserialize(decoder: Decoder): LocalDateTime =
+        decoder.decodeString().let { text ->
+            runCatching { LocalDateTime.parse(text, DateTimeFormatter.ISO_LOCAL_DATE_TIME) }
+                .getOrElse { LocalDate.parse(text, DateTimeFormatter.ISO_LOCAL_DATE).atStartOfDay() }
+        }
 }

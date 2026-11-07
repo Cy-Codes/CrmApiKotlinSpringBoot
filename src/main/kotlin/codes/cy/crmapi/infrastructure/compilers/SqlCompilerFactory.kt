@@ -1,6 +1,7 @@
 package codes.cy.crmapi.infrastructure.compilers
 
 import codes.cy.crmapi.domain.common.DatabaseProvider
+import codes.cy.crmapi.infrastructure.repositories.isSafeSqlIdentifier
 import org.springframework.stereotype.Component
 
 /**
@@ -37,6 +38,63 @@ abstract class BaseSqlCompiler : ISqlCompiler {
 
     override fun compile(query: SqlQuery): CompiledSqlQuery =
         compileInternal(query, initialParamIndex = 0)
+
+    override fun compile(command: SqlCommand): CompiledSqlQuery {
+        require(command.table.isSafeSqlIdentifier()) { "Invalid identifier table name: ${command.table}" }
+        val (sql, bindings) = when (command) {
+            is SqlCommand.Insert -> compileInsert(command)
+            is SqlCommand.Update -> compileUpdate(command)
+            is SqlCommand.Delete -> compileDelete(command)
+        }
+        return CompiledSqlQuery(
+            sql = sql,
+            bindings = bindings,
+            namedBindings = bindings.mapIndexed { idx, value -> "@p$idx" to value }.toMap()
+        )
+    }
+
+    private fun compileInsert(command: SqlCommand.Insert): Pair<String, List<Any?>> {
+        require(command.values.isNotEmpty()) { "INSERT requires at least one column value." }
+        val columns = command.values.keys.map { column -> quoteSafeColumn(column) }
+        val placeholders = command.values.keys.indices.map { idx -> "@p$idx" }
+        return Pair(
+            "INSERT INTO ${quoteIdentifier(command.table)} (${columns.joinToString(", ")}) VALUES (${placeholders.joinToString(", ")})",
+            command.values.values.toList()
+        )
+    }
+
+    private fun compileUpdate(command: SqlCommand.Update): Pair<String, List<Any?>> {
+        require(command.values.isNotEmpty()) { "UPDATE requires at least one column value." }
+        require(command.whereClauses.isNotEmpty()) { "UPDATE requires a WHERE predicate." }
+        val assignments = command.values.keys
+            .mapIndexed { idx, column -> "${quoteSafeColumn(column)} = @p$idx" }
+        val (whereSql, whereBindings) = compileEqualsPredicates(command.whereClauses, command.values.size)
+        return Pair(
+            "UPDATE ${quoteIdentifier(command.table)} SET ${assignments.joinToString(", ")}$whereSql",
+            command.values.values.toList() + whereBindings
+        )
+    }
+
+    private fun compileDelete(command: SqlCommand.Delete): Pair<String, List<Any?>> {
+        require(command.whereClauses.isNotEmpty()) { "DELETE requires a WHERE predicate." }
+        val (whereSql, whereBindings) = compileEqualsPredicates(command.whereClauses, 0)
+        return Pair("DELETE FROM ${quoteIdentifier(command.table)}$whereSql", whereBindings)
+    }
+
+    private fun compileEqualsPredicates(
+        clauses: List<WhereClause.EqualsClause>,
+        startParamIndex: Int,
+    ): Pair<String, List<Any?>> {
+        val fragments = clauses.mapIndexed { idx, clause ->
+            "${quoteSafeColumn(clause.column)} = @p${startParamIndex + idx}"
+        }
+        return Pair(" WHERE ${fragments.joinToString(" AND ")}", clauses.map { it.value })
+    }
+
+    private fun quoteSafeColumn(column: String): String {
+        require(column.isSafeSqlIdentifier()) { "Invalid identifier column name: $column" }
+        return quoteIdentifier(column)
+    }
 
     private fun compileInternal(query: SqlQuery, initialParamIndex: Int): CompiledSqlQuery {
         val selectProjection = when {

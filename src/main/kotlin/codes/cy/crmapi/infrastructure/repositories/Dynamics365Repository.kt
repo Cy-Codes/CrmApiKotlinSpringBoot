@@ -4,16 +4,20 @@ import codes.cy.crmapi.domain.common.DatabaseProvider
 import codes.cy.crmapi.domain.common.PagedResult
 import codes.cy.crmapi.domain.common.QueryOptions
 import codes.cy.crmapi.domain.dynamics365.Account
+import codes.cy.crmapi.domain.dynamics365.AccountWriteRequest
 import codes.cy.crmapi.domain.dynamics365.ActivityPointer
 import codes.cy.crmapi.domain.dynamics365.BusinessUnit
 import codes.cy.crmapi.domain.dynamics365.Contact
+import codes.cy.crmapi.domain.dynamics365.ContactWriteRequest
 import codes.cy.crmapi.domain.dynamics365.Incident
 import codes.cy.crmapi.domain.dynamics365.Lead
 import codes.cy.crmapi.domain.dynamics365.Opportunity
 import codes.cy.crmapi.domain.dynamics365.OpportunityProduct
+import codes.cy.crmapi.domain.dynamics365.OpportunityWriteRequest
 import codes.cy.crmapi.domain.dynamics365.PriceLevel
 import codes.cy.crmapi.domain.dynamics365.Product
 import codes.cy.crmapi.domain.dynamics365.SystemUser
+import java.time.OffsetDateTime
 import java.util.UUID
 import org.springframework.stereotype.Repository
 
@@ -95,4 +99,31 @@ class Dynamics365Repository(
 
     override fun getActivityPointerById(provider: DatabaseProvider, id: UUID): ActivityPointer? =
         baseRepository.getById(provider, "Dynamics365.ActivityPointer", "activityid", id, ActivityPointer::class)
+
+    override fun executeCreateAccount(provider: DatabaseProvider, id: UUID, request: AccountWriteRequest, now: OffsetDateTime): Account =
+        baseRepository.executeCreate(provider, DYNAMICS365_ACCOUNT_TABLE, DYNAMICS365_ACCOUNT_ID_COLUMN, id, request.toInsertColumns(id, now), Account::class)
+
+    override fun executeUpdateAccount(provider: DatabaseProvider, id: UUID, request: AccountWriteRequest, now: OffsetDateTime): Account? =
+        baseRepository.executeUpdate(provider, DYNAMICS365_ACCOUNT_TABLE, DYNAMICS365_ACCOUNT_ID_COLUMN, id, request.toUpdateColumns(now), Account::class)
+
+    override fun executeDeleteAccount(provider: DatabaseProvider, id: UUID): Boolean =
+        baseRepository.executeDelete(provider, DYNAMICS365_ACCOUNT_TABLE, DYNAMICS365_ACCOUNT_ID_COLUMN, id)
+
+    override fun executeCreateContact(provider: DatabaseProvider, id: UUID, request: ContactWriteRequest, now: OffsetDateTime): Contact =
+        baseRepository.executeCreate(provider, DYNAMICS365_CONTACT_TABLE, DYNAMICS365_CONTACT_ID_COLUMN, id, request.toInsertColumns(id, now), Contact::class)
+
+    override fun executeUpdateContact(provider: DatabaseProvider, id: UUID, request: ContactWriteRequest, now: OffsetDateTime): Contact? =
+        baseRepository.executeUpdate(provider, DYNAMICS365_CONTACT_TABLE, DYNAMICS365_CONTACT_ID_COLUMN, id, request.toUpdateColumns(now), Contact::class)
+
+    override fun executeDeleteContact(provider: DatabaseProvider, id: UUID): Boolean =
+        baseRepository.executeDelete(provider, DYNAMICS365_CONTACT_TABLE, DYNAMICS365_CONTACT_ID_COLUMN, id)
+
+    override fun executeCreateOpportunity(provider: DatabaseProvider, id: UUID, request: OpportunityWriteRequest, now: OffsetDateTime): Opportunity =
+        baseRepository.executeCreate(provider, DYNAMICS365_OPPORTUNITY_TABLE, DYNAMICS365_OPPORTUNITY_ID_COLUMN, id, request.toInsertColumns(id, now), Opportunity::class)
+
+    override fun executeUpdateOpportunity(provider: DatabaseProvider, id: UUID, request: OpportunityWriteRequest, now: OffsetDateTime): Opportunity? =
+        baseRepository.executeUpdate(provider, DYNAMICS365_OPPORTUNITY_TABLE, DYNAMICS365_OPPORTUNITY_ID_COLUMN, id, request.toUpdateColumns(now), Opportunity::class)
+
+    override fun executeDeleteOpportunity(provider: DatabaseProvider, id: UUID): Boolean =
+        baseRepository.executeDelete(provider, DYNAMICS365_OPPORTUNITY_TABLE, DYNAMICS365_OPPORTUNITY_ID_COLUMN, id)
 }

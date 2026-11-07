@@ -1,0 +1,28 @@
+meta {
+  name: Create Contact (admin, 201)
+  type: http
+  seq: 91
+}
+
+post {
+  url: {{baseUrl}}/api/{{provider}}/v1/salesforce/contacts
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{admin_token}}
+}
+
+body:json {
+  {"lastName":"Bruno","firstName":"Test","ownerId":"{{sf_user_id}}","accountId":"{{sf_account_id}}"}
+}
+
+script:post-response {
+  bru.setVar("sf_created_contact_id", res.body.id);
+}
+
+assert {
+  res.status: eq 201
+  res.headers.location: contains /salesforce/contacts/
+}

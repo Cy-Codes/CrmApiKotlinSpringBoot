@@ -1,0 +1,19 @@
+meta {
+  name: Anonymous PUT Account (401)
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/{{provider}}/v1/salesforce/accounts/{{sf_account_id}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {"name":"Bruno Negative","ownerId":"{{sf_user_id}}"}
+}
+
+assert {
+  res.status: eq 401
+}

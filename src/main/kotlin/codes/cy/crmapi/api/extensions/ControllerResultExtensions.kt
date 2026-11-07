@@ -1,7 +1,11 @@
 package codes.cy.crmapi.api.extensions
 
 import codes.cy.crmapi.domain.common.QueryOptions
+import codes.cy.crmapi.domain.common.WriteRequest
 import org.springframework.http.ResponseEntity
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+
+private const val LOCATION_ID_SEGMENT = "/{id}"
 
 private val RESERVED_QUERY_PARAMETER_NAMES = setOf(
     "page",
@@ -37,3 +41,30 @@ fun <T : Any> T?.toResponseEntity(): ResponseEntity<T> =
  */
 fun <T : Any> T.toOkResponseEntity(): ResponseEntity<T> =
     ResponseEntity.ok(this)
+
+/**
+ * Pure validation gate for request bodies: returns the request unchanged or throws [IllegalArgumentException] (`400 Bad Request`).
+ */
+fun <R : WriteRequest> R.validated(): R = also { it.validate() }
+
+/**
+ * Builds `201 Created` with a `Location` header of `<current request URI>/{id}` (the GET-by-id route) and this entity as body.
+ */
+fun <T : Any> T.toCreatedResponseEntity(id: Any): ResponseEntity<T> =
+    ResponseEntity
+        .created(ServletUriComponentsBuilder.fromCurrentRequestUri().path(LOCATION_ID_SEGMENT).buildAndExpand(id).toUri())
+        .body(this)
+
+/**
+ * Maps a nullable entity into `200 OK`, or throws [NoSuchElementException] (rendered as `404` Problem Details) when absent.
+ */
+fun <T : Any> T?.toOkResponseEntityOrNotFound(resource: String, id: Any): ResponseEntity<T> =
+    ResponseEntity.ok(this ?: throw NoSuchElementException(getNotFoundMessage(resource, id)))
+
+/**
+ * Maps a delete outcome into `204 No Content`, or throws [NoSuchElementException] (rendered as `404` Problem Details) when nothing was deleted.
+ */
+fun Boolean.toNoContentResponseEntityOrNotFound(resource: String, id: Any): ResponseEntity<Void> =
+    if (this) ResponseEntity.noContent().build() else throw NoSuchElementException(getNotFoundMessage(resource, id))
+
+private fun getNotFoundMessage(resource: String, id: Any): String = "$resource '$id' was not found."

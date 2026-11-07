@@ -41,6 +41,12 @@ object JdbcDataMapper {
     }
 
     /**
+     * Side-effecting JDBC helper: executes an INSERT / UPDATE / DELETE and returns the affected row count.
+     */
+    fun executeUpdate(connection: Connection, compiledCommand: CompiledSqlQuery): Int =
+        prepareStatement(connection, compiledCommand).use { statement -> statement.executeUpdate() }
+
+    /**
      * Side-effecting JDBC helper: executes a scalar integer query (such as `COUNT(*)`).
      */
     fun queryScalarInt(connection: Connection, compiledQuery: CompiledSqlQuery): Int =

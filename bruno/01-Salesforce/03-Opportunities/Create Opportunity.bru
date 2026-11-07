@@ -1,0 +1,28 @@
+meta {
+  name: Create Opportunity (admin, 201)
+  type: http
+  seq: 91
+}
+
+post {
+  url: {{baseUrl}}/api/{{provider}}/v1/salesforce/opportunities
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{admin_token}}
+}
+
+body:json {
+  {"name":"Bruno Opportunity","stageName":"Prospecting","closeDate":"2027-12-31","ownerId":"{{sf_user_id}}","accountId":"{{sf_account_id}}","amount":1000.00,"probability":10.00}
+}
+
+script:post-response {
+  bru.setVar("sf_created_opportunity_id", res.body.id);
+}
+
+assert {
+  res.status: eq 201
+  res.headers.location: contains /salesforce/opportunities/
+}

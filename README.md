@@ -97,6 +97,52 @@ Where:
 
 ---
 
+## Write Endpoints (Create / Replace / Delete)
+
+First-pass entities — identical contract in [CrmApiCSharp](file:///Users/cy/codes/localstack-reference-architecture/CrmApiCSharp/README.md):
+
+| CRM | Collections (`/api/{ms\|pg}/v1/...`) | Id type |
+|-----|-------------------------------------|---------|
+| Salesforce | `salesforce/accounts`, `salesforce/contacts`, `salesforce/opportunities` | 18-char string (`001`/`003`/`006` prefix + 15 random uppercase alphanumerics) |
+| HubSpot | `hubspot/companies`, `hubspot/contacts`, `hubspot/deals` | positive `Long` = `epochMillis * 1000 + random(0..999)` |
+| Dynamics 365 | `dynamics365/accounts`, `dynamics365/contacts`, `dynamics365/opportunities` | `UUID` |
+
+| Method & route | Success | Failure |
+|----------------|---------|---------|
+| `POST {collection}` | `201` + `Location` (GET-by-id route) + freshly re-read entity | `400` invalid body, `409` FK/unique violation |
+| `PUT {collection}/{id}` (full replace, same body as POST) | `200` + updated entity | `400`, `404` unknown id, `409` |
+| `DELETE {collection}/{id}` (hard delete) | `204` | `404` unknown id, `409` (row still referenced) |
+
+All error responses are RFC 7807 Problem Details. Notes:
+- **Server-owned columns**: ids come from the injectable `IIdGenerator`; audit columns (`CreatedDate/LastModifiedDate`, `createdAt/updatedAt`, `createdon/modifiedon`) come from a UTC `Clock`. On replace only the modified timestamp changes.
+- **Owner as actor**: Salesforce `CreatedById = LastModifiedById = ownerId` (create) and `LastModifiedById = ownerId` (replace); Dynamics `createdby = modifiedby = ownerid` / `modifiedby = ownerid`. *Limitation:* JWT subjects do not map to CRM users, so the record owner stands in for the acting user. Salesforce requires `ownerId`; Dynamics requires `ownerId` and `owningBusinessUnit` (`owningbusinessunit` is also accepted).
+- **Generated columns are never written**: Salesforce Contact `Name`, Opportunity `ExpectedRevenue`. Dynamics Contact `fullname` is computed server-side as `"$firstName $lastName"` (trimmed).
+- **Optional defaulted columns** (`isDeleted`, `isPrivate`, `isClosed`, `isWon`, `forecastCategoryName`, `lifecyclestage`, `archived`, `stateCode`, `statusCode`): `null`/omitted → database default on create, current value kept on replace. Other nullable columns are set to `null` on replace.
+- Request-body property names follow the domain model property names (e.g. `ownerId`, `lastName`, `dealStageId`); dates accept `yyyy-MM-dd` or ISO date-time (UTC).
+- Every mutation runs in one transaction (insert/update/delete, then re-read by id; no `RETURNING`, so both engines behave alike). Values are always bound parameters; identifiers pass the `isSafeSqlIdentifier` whitelist; the query AST gained immutable `SqlCommand.Insert/Update/Delete` nodes compiled by `SqlServerCompiler` / `PostgresCompiler`.
+
+### Authentication & roles
+
+JWT resource-server validation (HS256) is **always on** — the former `crm.security.auth-enabled` / `CRM_SECURITY_AUTH_ENABLED` toggle was removed. Roles come from the `roles` claim (JSON array or single string, case-insensitive) and map to `ROLE_ADMIN` / `ROLE_USER` (see `CrmRole`).
+
+| Request | Required |
+|---------|----------|
+| `GET`, `/health`, `/graphql`, Swagger, actuator | anonymous |
+| `POST`, `PUT` on `/api/**` | role `admin` or `user` |
+| `DELETE` on `/api/**` | role `admin` |
+
+No/invalid token → `401` (with `WWW-Authenticate: Bearer`); valid token without a sufficient role → `403`.
+
+Settings (unchanged): `CRM_SECURITY_JWT_SECRET`, `CRM_SECURITY_JWT_ISSUER`, `CRM_SECURITY_JWT_AUDIENCE`. Mint a development token (HS256, claims `sub`, `iss`, `aud`, `exp`, `roles`):
+```bash
+TOKEN=$(crm-infra/scripts/dev-token.sh admin)   # or: user
+curl -i -X POST http://localhost:5172/api/pg/v1/hubspot/companies \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"name":"Acme"}'
+```
+
+---
+
 ## Project Layout
 
 ```

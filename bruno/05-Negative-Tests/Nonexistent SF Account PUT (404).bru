@@ -1,0 +1,23 @@
+meta {
+  name: PUT Nonexistent SF Account (404)
+  type: http
+  seq: 10
+}
+
+put {
+  url: {{baseUrl}}/api/{{provider}}/v1/salesforce/accounts/000000000000000NON
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{admin_token}}
+}
+
+body:json {
+  {"name":"Bruno Negative","ownerId":"{{sf_user_id}}"}
+}
+
+assert {
+  res.status: eq 404
+}

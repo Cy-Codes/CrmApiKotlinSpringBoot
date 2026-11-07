@@ -1,0 +1,15 @@
+meta {
+  name: Anonymous DELETE Account (401)
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/{{provider}}/v1/salesforce/accounts/{{sf_account_id}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 401
+}

@@ -1,0 +1,23 @@
+meta {
+  name: Update Deal (user, 200)
+  type: http
+  seq: 92
+}
+
+put {
+  url: {{baseUrl}}/api/{{provider}}/v1/hubspot/deals/{{hs_created_deal_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{user_token}}
+}
+
+body:json {
+  {"dealName":"Bruno Deal Updated","pipelineId":"{{hs_pipeline_id}}","dealStageId":"{{hs_stage_id}}","amount":750.00}
+}
+
+assert {
+  res.status: eq 200
+}

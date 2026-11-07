@@ -1,0 +1,28 @@
+meta {
+  name: Create Company (admin, 201)
+  type: http
+  seq: 91
+}
+
+post {
+  url: {{baseUrl}}/api/{{provider}}/v1/hubspot/companies
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{admin_token}}
+}
+
+body:json {
+  {"name":"Bruno Co","domain":"bruno.example.com"}
+}
+
+script:post-response {
+  bru.setVar("hs_created_company_id", res.body.companyId);
+}
+
+assert {
+  res.status: eq 201
+  res.headers.location: contains /hubspot/companies/
+}

@@ -1,5 +1,6 @@
 package codes.cy.crmapi.api.middleware
 
+import codes.cy.crmapi.domain.common.DataConflictException
 import jakarta.servlet.http.HttpServletRequest
 import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
@@ -37,6 +38,9 @@ class ExceptionHandlingAdvice(
     companion object {
         const val BAD_REQUEST_TITLE = "Bad Request"
         const val NOT_FOUND_TITLE = "Not Found"
+        const val CONFLICT_TITLE = "Conflict"
+        const val UNAUTHORIZED_TITLE = "Unauthorized"
+        const val FORBIDDEN_TITLE = "Forbidden"
         const val INTERNAL_SERVER_ERROR_TITLE = "Internal Server Error"
         const val GENERIC_INTERNAL_ERROR_DETAIL = "An unexpected server error occurred."
 
@@ -62,12 +66,15 @@ class ExceptionHandlingAdvice(
                 is NoHandlerFoundException,
                 -> HttpStatus.NOT_FOUND.value()
 
+                is DataConflictException -> HttpStatus.CONFLICT.value()
+
                 else -> HttpStatus.INTERNAL_SERVER_ERROR.value()
             }
 
             val title = when (statusCode) {
                 HttpStatus.BAD_REQUEST.value() -> BAD_REQUEST_TITLE
                 HttpStatus.NOT_FOUND.value() -> NOT_FOUND_TITLE
+                HttpStatus.CONFLICT.value() -> CONFLICT_TITLE
                 else -> INTERNAL_SERVER_ERROR_TITLE
             }
 

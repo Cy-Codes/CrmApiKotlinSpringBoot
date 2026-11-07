@@ -11,7 +11,6 @@ ConnectionStrings:
 
 crm:
   security:
-    auth-enabled: ${CRM_SECURITY_AUTH_ENABLED:false}
     jwt:
       secret: ${CRM_SECURITY_JWT_SECRET:LocalStackCRMReferenceArchitectureJwtSigningSecretKey2026!}
       issuer: ${CRM_SECURITY_JWT_ISSUER:https://auth.localstack.local}

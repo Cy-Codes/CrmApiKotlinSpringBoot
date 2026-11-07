@@ -8,4 +8,9 @@ interface ISqlCompiler {
      * Pure compilation of a [SqlQuery] into dialect-specific SQL and parameter bindings.
      */
     fun compile(query: SqlQuery): CompiledSqlQuery
+
+    /**
+     * Pure compilation of a [SqlCommand] (INSERT / UPDATE / DELETE) into dialect-specific SQL and parameter bindings.
+     */
+    fun compile(command: SqlCommand): CompiledSqlQuery
 }

@@ -1,0 +1,27 @@
+meta {
+  name: Update Contact (user, 200)
+  type: http
+  seq: 92
+}
+
+put {
+  url: {{baseUrl}}/api/{{provider}}/v1/hubspot/contacts/{{hs_created_contact_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{user_token}}
+}
+
+body:json {
+  {"email":"bruno-{{run_suffix}}@example.com","firstName":"Bruno","lastName":"Updated"}
+}
+
+script:pre-request {
+  bru.setVar("run_suffix", Date.now());
+}
+
+assert {
+  res.status: eq 200
+}

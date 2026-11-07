@@ -6,6 +6,7 @@ import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.Timestamp
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.reflect.KClass
@@ -151,7 +152,10 @@ object JdbcDataMapper {
             LocalDateTime::class -> when (rawValue) {
                 is LocalDateTime -> rawValue
                 is Timestamp -> rawValue.toLocalDateTime()
-                else -> LocalDateTime.parse(rawValue.toString())
+                else -> rawValue.toString().let { text ->
+                    runCatching { LocalDateTime.parse(text) }
+                        .getOrElse { LocalDate.parse(text).atStartOfDay() }
+                }
             }
             UUID::class -> when (rawValue) {
                 is UUID -> rawValue

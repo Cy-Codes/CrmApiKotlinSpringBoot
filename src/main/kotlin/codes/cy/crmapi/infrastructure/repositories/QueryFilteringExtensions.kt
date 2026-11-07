@@ -65,7 +65,11 @@ fun SqlQuery.applySorting(
 }
 
 /**
- * Applies 1-based page offset and limit to a [SqlQuery].
+ * Applies 1-based page offset and limit to a [SqlQuery] with integer overflow protection.
  */
-fun SqlQuery.applyPagination(page: Int, pageSize: Int): SqlQuery =
-    this.skip((page - 1) * pageSize).take(pageSize)
+fun SqlQuery.applyPagination(page: Int, pageSize: Int): SqlQuery {
+    val safePage = if (page < QueryOptions.DEFAULT_PAGE) QueryOptions.DEFAULT_PAGE else if (page > QueryOptions.MAX_PAGE) QueryOptions.MAX_PAGE else page
+    val safePageSize = if (pageSize < QueryOptions.DEFAULT_PAGE || pageSize > QueryOptions.MAX_PAGE_SIZE) QueryOptions.DEFAULT_PAGE_SIZE else pageSize
+    val offset = ((safePage.toLong() - 1L) * safePageSize.toLong()).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+    return this.skip(offset).take(safePageSize)
+}

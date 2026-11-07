@@ -11,10 +11,10 @@ data class QueryOptions(
     val filters: Map<String, String?>? = null
 ) {
     /**
-     * Pure calculation returning a valid 1-based page number.
+     * Pure calculation returning a valid 1-based page number clamped to [DEFAULT_PAGE, MAX_PAGE].
      */
     val normalizedPage: Int
-        get() = if (page < DEFAULT_PAGE) DEFAULT_PAGE else page
+        get() = if (page < DEFAULT_PAGE) DEFAULT_PAGE else if (page > MAX_PAGE) MAX_PAGE else page
 
     /**
      * Pure calculation clamping [pageSize] within [DEFAULT_PAGE, MAX_PAGE_SIZE].
@@ -25,6 +25,7 @@ data class QueryOptions(
     companion object {
         const val DEFAULT_PAGE: Int = 1
         const val DEFAULT_PAGE_SIZE: Int = 20
+        const val MAX_PAGE: Int = 100_000
         const val MAX_PAGE_SIZE: Int = 100
         const val DEFAULT_SORT_DIRECTION: String = "asc"
         const val DESCENDING_SORT_DIRECTION: String = "desc"

@@ -1,0 +1,174 @@
+enum DatabaseProvider {
+    MS
+    PG
+}
+
+type Query {
+    salesforceAccounts(provider: DatabaseProvider = MS, page: Int = 1, pageSize: Int = 20): [SalesforceAccount!]!
+    salesforceAccountById(id: ID!, provider: DatabaseProvider = MS): SalesforceAccount
+    salesforceContacts(provider: DatabaseProvider = MS, page: Int = 1, pageSize: Int = 20): [SalesforceContact!]!
+    salesforceContactById(id: ID!, provider: DatabaseProvider = MS): SalesforceContact
+
+    hubSpotCompanies(provider: DatabaseProvider = MS, page: Int = 1, pageSize: Int = 20): [HubSpotCompany!]!
+    hubSpotCompanyById(id: ID!, provider: DatabaseProvider = MS): HubSpotCompany
+    hubSpotContacts(provider: DatabaseProvider = MS, page: Int = 1, pageSize: Int = 20): [HubSpotContact!]!
+
+    dynamics365Accounts(provider: DatabaseProvider = MS, page: Int = 1, pageSize: Int = 20): [Dynamics365Account!]!
+    dynamics365AccountById(id: ID!, provider: DatabaseProvider = MS): Dynamics365Account
+    dynamics365Contacts(provider: DatabaseProvider = MS, page: Int = 1, pageSize: Int = 20): [Dynamics365Contact!]!
+}
+
+type SalesforceAccount {
+    id: ID!
+    isDeleted: Boolean!
+    parentId: String
+    name: String!
+    type: String
+    billingStreet: String
+    billingCity: String
+    billingState: String
+    billingPostalCode: String
+    billingCountry: String
+    shippingStreet: String
+    shippingCity: String
+    shippingState: String
+    shippingPostalCode: String
+    shippingCountry: String
+    phone: String
+    fax: String
+    website: String
+    industry: String
+    annualRevenue: Float
+    numberOfEmployees: Int
+    description: String
+    ownerId: String!
+    createdDate: String!
+    createdById: String!
+    lastModifiedDate: String!
+    lastModifiedById: String!
+}
+
+type SalesforceContact {
+    id: ID!
+    isDeleted: Boolean!
+    accountId: String
+    lastName: String!
+    firstName: String
+    salutation: String
+    name: String
+    reportsToId: String
+    title: String
+    department: String
+    email: String
+    phone: String
+    mobilePhone: String
+    mailingStreet: String
+    mailingCity: String
+    mailingState: String
+    mailingPostalCode: String
+    mailingCountry: String
+    leadSource: String
+    description: String
+    ownerId: String!
+    createdDate: String!
+    createdById: String!
+    lastModifiedDate: String!
+    lastModifiedById: String!
+}
+
+type HubSpotCompany {
+    companyId: ID!
+    name: String!
+    domain: String
+    industry: String
+    phone: String
+    address: String
+    city: String
+    state: String
+    zip: String
+    country: String
+    annualRevenue: Float
+    numberOfEmployees: Int
+    description: String
+    ownerId: String
+    lifecyclestage: String!
+    createdAt: String!
+    updatedAt: String!
+    archived: Boolean!
+}
+
+type HubSpotContact {
+    contactId: ID!
+    email: String!
+    firstName: String
+    lastName: String
+    phone: String
+    mobilePhone: String
+    jobTitle: String
+    associatedCompanyId: String
+    ownerId: String
+    lifecyclestage: String!
+    leadStatus: String
+    address: String
+    city: String
+    state: String
+    zip: String
+    country: String
+    createdAt: String!
+    updatedAt: String!
+    archived: Boolean!
+}
+
+type Dynamics365Account {
+    accountId: ID!
+    name: String!
+    accountNumber: String
+    parentAccountId: String
+    telephone1: String
+    emailAddress1: String
+    websiteurl: String
+    address1_Line1: String
+    address1_City: String
+    address1_StateOrProvince: String
+    address1_PostalCode: String
+    address1_Country: String
+    revenue: Float
+    numberOfEmployees: Int
+    industrycode: Int
+    description: String
+    ownerId: String!
+    owningbusinessunit: String!
+    stateCode: Int!
+    statusCode: Int!
+    createdOn: String!
+    createdBy: String!
+    modifiedOn: String!
+    modifiedBy: String!
+}
+
+type Dynamics365Contact {
+    contactId: ID!
+    parentCustomerId: String
+    firstName: String
+    lastName: String!
+    fullName: String!
+    jobTitle: String
+    emailAddress1: String
+    telephone1: String
+    mobilephone: String
+    address1_Line1: String
+    address1_City: String
+    address1_StateOrProvince: String
+    address1_PostalCode: String
+    address1_Country: String
+    leadsourcecode: Int
+    description: String
+    ownerId: String!
+    owningbusinessunit: String!
+    stateCode: Int!
+    statusCode: Int!
+    createdOn: String!
+    createdBy: String!
+    modifiedOn: String!
+    modifiedBy: String!
+}

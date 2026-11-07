@@ -78,6 +78,11 @@ data class SqlQuery(
         copy(limitValue = limit)
 
     /**
+     * Alias for [take] matching SqlKata naming convention.
+     */
+    fun limit(limit: Int): SqlQuery = take(limit)
+
+    /**
      * Returns a new [SqlQuery] configured as a `SELECT COUNT(*)` aggregation.
      */
     fun asCount(): SqlQuery =

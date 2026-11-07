@@ -5,13 +5,14 @@ spring:
   application:
     name: CrmApiKotlinSpringBoot
 
+ConnectionStrings:
+  CRMDatabaseMS: ${CONNECTIONSTRINGS_CRMDATABASEMS:Server=localhost,1433;Database=CRMDatabaseMS;User Id=sa;Password=CrmDev2026!Secure#Pass;TrustServerCertificate=True;}
+  CRMDatabasePG: ${CONNECTIONSTRINGS_CRMDATABASEPG:Host=localhost;Port=5432;Database=CRMDatabase;Username=postgres;Password=postgres;}
+
 crm:
-  databases:
-    ms:
-      url: ${CRM_DATABASES_MS_URL:jdbc:sqlserver://localhost:1433;databaseName=CRMDatabaseMS;encrypt=true;trustServerCertificate=true}
-      username: ${CRM_DATABASES_MS_USERNAME:sa}
-      password: ${CRM_DATABASES_MS_PASSWORD:YourStrong!Passw0rd}
-    pg:
-      url: ${CRM_DATABASES_PG_URL:jdbc:postgresql://localhost:5432/CRMDatabasePG}
-      username: ${CRM_DATABASES_PG_USERNAME:postgres}
-      password: ${CRM_DATABASES_PG_PASSWORD:YourStrong!Passw0rd}
+  security:
+    auth-enabled: ${CRM_SECURITY_AUTH_ENABLED:false}
+    jwt:
+      secret: ${CRM_SECURITY_JWT_SECRET:LocalStackCRMReferenceArchitectureJwtSigningSecretKey2026!}
+      issuer: ${CRM_SECURITY_JWT_ISSUER:https://auth.localstack.local}
+      audience: ${CRM_SECURITY_JWT_AUDIENCE:crm-api}

@@ -117,4 +117,20 @@ class SqlCompilerTests {
         assertEquals(expected, rawProvider.toDatabaseProvider())
         assertEquals(rawProvider.lowercase(), expected.toProviderCode())
     }
+
+    @Test
+    fun `queryFilteringExtensions applyPagination protects against integer overflow`() {
+        val compiler = factory.getCompiler(DatabaseProvider.Ms)
+        val query = SqlQuery("Salesforce.Account")
+            .orderBy("Name")
+            .applyPagination(Int.MAX_VALUE, 100)
+
+        val compiled = compiler.compile(query)
+
+        // MAX_PAGE is 100,000 so offset is (100,000 - 1) * 100 = 9,999,900
+        assertTrue(compiled.sql.contains("OFFSET"))
+        assertTrue(compiled.sql.contains("FETCH NEXT"))
+        assertTrue(compiled.bindings.contains(9999900))
+        assertTrue(compiled.bindings.contains(100))
+    }
 }

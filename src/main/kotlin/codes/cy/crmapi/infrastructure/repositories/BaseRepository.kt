@@ -44,9 +44,16 @@ class BaseRepository(
 
         // 3. Explicit Side-Effecting I/O Execution
         return executeWithOpenConnection(provider) { connection ->
-            val totalCount = JdbcDataMapper.queryScalarInt(connection, compiledCount)
-            val items = JdbcDataMapper.queryList(connection, compiledData, klass)
-            PagedResult(items, totalCount, page, pageSize)
+            val prevAutoCommit = connection.autoCommit
+            connection.autoCommit = false
+            try {
+                val totalCount = JdbcDataMapper.queryScalarInt(connection, compiledCount)
+                val items = JdbcDataMapper.queryList(connection, compiledData, klass)
+                connection.commit()
+                PagedResult(items, totalCount, page, pageSize)
+            } finally {
+                connection.autoCommit = prevAutoCommit
+            }
         }
     }
 
@@ -76,7 +83,7 @@ class BaseRepository(
         configureQuery: ((SqlQuery) -> SqlQuery)?,
     ): List<T> {
         val baseQuery = SqlQuery(table)
-        val query = configureQuery?.invoke(baseQuery) ?: baseQuery
+        val query = (configureQuery?.invoke(baseQuery) ?: baseQuery).limit(MAX_CHILD_RESULTS)
         val compiled = compilerFactory.getCompiler(provider).compile(query)
 
         return executeWithOpenConnection(provider) { connection ->
@@ -85,13 +92,56 @@ class BaseRepository(
     }
 
     /**
-     * Side-effecting I/O boundary: opens a provider-specific [Connection], executes the operation, and closes the connection.
+     * Side-effecting I/O boundary: opens a provider-specific [Connection], executes the operation with transient fault retries, and closes the connection.
      */
     private fun <TResult> executeWithOpenConnection(
         provider: DatabaseProvider,
         operation: (Connection) -> TResult,
-    ): TResult =
-        connectionFactory.createConnection(provider).use { connection ->
-            operation(connection)
+    ): TResult {
+        var attempt = 1
+        while (true) {
+            try {
+                return connectionFactory.createConnection(provider).use { connection ->
+                    operation(connection)
+                }
+            } catch (ex: Exception) {
+                if (attempt < MAX_RETRY_ATTEMPTS && isTransientException(ex)) {
+                    val delayMs = INITIAL_RETRY_DELAY_MS * (1L shl (attempt - 1))
+                    try {
+                        Thread.sleep(delayMs)
+                    } catch (_: InterruptedException) {
+                        Thread.currentThread().interrupt()
+                        throw ex
+                    }
+                    attempt++
+                } else {
+                    throw ex
+                }
+            }
         }
+    }
+
+    private fun isTransientException(ex: Throwable): Boolean =
+        when (ex) {
+            is java.sql.SQLTransientException -> true
+            is java.sql.SQLException -> isTransientSqlState(ex.sqlState)
+            is java.net.SocketTimeoutException, is java.net.SocketException -> true
+            else -> ex.cause?.let { isTransientException(it) } ?: false
+        }
+
+    private fun isTransientSqlState(sqlState: String?): Boolean {
+        if (sqlState == null) return false
+        return sqlState.startsWith(PG_SQLSTATE_CONNECTION_PREFIX) ||
+            sqlState == PG_SQLSTATE_SERIALIZATION_FAILURE ||
+            sqlState == PG_SQLSTATE_ADMIN_SHUTDOWN
+    }
+
+    companion object {
+        const val MAX_CHILD_RESULTS: Int = 1000
+        private const val MAX_RETRY_ATTEMPTS: Int = 3
+        private const val INITIAL_RETRY_DELAY_MS: Long = 50L
+        private const val PG_SQLSTATE_CONNECTION_PREFIX: String = "08"
+        private const val PG_SQLSTATE_SERIALIZATION_FAILURE: String = "40001"
+        private const val PG_SQLSTATE_ADMIN_SHUTDOWN: String = "57P01"
+    }
 }

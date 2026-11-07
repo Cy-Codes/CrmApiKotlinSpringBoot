@@ -17,6 +17,7 @@ import kotlin.reflect.full.primaryConstructor
  * Eliminates ORM/JPA tracking overhead while keeping Domain models 100% persistence-ignorant.
  */
 object JdbcDataMapper {
+    const val DEFAULT_QUERY_TIMEOUT_SECONDS: Int = 30
     private val NAMED_PARAM_REGEX = Regex("@p\\d+")
 
     /**
@@ -31,6 +32,7 @@ object JdbcDataMapper {
     fun prepareStatement(connection: Connection, compiledQuery: CompiledSqlQuery): PreparedStatement {
         val jdbcSql = toJdbcSql(compiledQuery.sql)
         val statement = connection.prepareStatement(jdbcSql)
+        statement.queryTimeout = DEFAULT_QUERY_TIMEOUT_SECONDS
         compiledQuery.bindings.forEachIndexed { index, value ->
             bindParameter(statement, index + 1, value)
         }

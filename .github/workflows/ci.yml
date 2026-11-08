@@ -60,6 +60,13 @@ jobs:
           path: CRMDatabasePG
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Checkout crm-infra (dev JWT token minting scripts)
+        uses: actions/checkout@v4
+        with:
+          repository: Cy-Codes/crm-infra
+          path: crm-infra
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Setup JDK 25
         uses: actions/setup-java@v4
         with:
@@ -96,7 +103,7 @@ jobs:
 
           echo "Waiting for PostgreSQL (crm_database_pg) initialization..."
           for i in {1..60}; do
-            if docker logs crm_database_pg 2>&1 | grep -q "CRM Database initialization complete"; then
+            if docker logs crm_database_pg 2>&1 | grep -q "PostgreSQL CRM Database is ready for connections"; then
               echo "PostgreSQL ready!"
               break
             fi
